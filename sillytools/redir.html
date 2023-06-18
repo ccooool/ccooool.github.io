@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html>
+    <script>
+        window.onload = function() {
+      var currentSubpath = window.location.pathname.split('/sillytools/redir.html/').filter(Boolean).pop();
+      console.log(currentSubpath)
+      window.location = "https://" + currentSubpath;
+    };
+    </script>
+</html>
