@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Minesweeper</title>
+  <style>
+    .board {
+      display: inline-block;
+    }
+    .cell {
+      width: 20px;
+      height: 20px;
+      border: 1px solid #ccc;
+      text-align: center;
+      vertical-align: middle;
+      font-weight: bold;
+      font-size: 14px;
+      background-color: #eee;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="board"></div>
+
+  <script>
+    var rows = 10;
+    var cols = 10;
+    var mines = 10;
+    var board = [];
+
+    function createBoard() {
+      var boardElement = document.querySelector('.board');
+      for (var i = 0; i < rows; i++) {
+        board[i] = [];
+        for (var j = 0; j < cols; j++) {
+          var cell = document.createElement('div');
+          cell.classList.add('cell');
+          cell.setAttribute('data-row', i);
+          cell.setAttribute('data-col', j);
+          board[i][j] = {
+            element: cell,
+            mine: false,
+            revealed: false,
+            neighborMines: 0
+          };
+          cell.addEventListener('click', handleCellClick);
+          boardElement.appendChild(cell);
+        }
+        boardElement.appendChild(document.createElement('br'));
+      }
+    }
+
+    function plantMines() {
+      var plantedMines = 0;
+      while (plantedMines < mines) {
+        var row = Math.floor(Math.random() * rows);
+        var col = Math.floor(Math.random() * cols);
+        if (!board[row][col].mine) {
+          board[row][col].mine = true;
+          plantedMines++;
+        }
+      }
+    }
+
+    function countNeighborMines() {
+      for (var i = 0; i < rows; i++) {
+        for (var j = 0; j < cols; j++) {
+          if (board[i][j].mine) {
+            continue;
+          }
+          var count = 0;
+          for (var dx = -1; dx <= 1; dx++) {
+            for (var dy = -1; dy <= 1; dy++) {
+              var ni = i + dx;
+              var nj = j + dy;
+              if (ni >= 0 && ni < rows && nj >= 0 && nj < cols && board[ni][nj].mine) {
+                count++;
+              }
+            }
+          }
+          board[i][j].neighborMines = count;
+        }
+      }
+    }
+
+    function revealCell(row, col) {
+      var cell = board[row][col];
+      if (cell.revealed || cell.mine) {
+        return;
+      }
+      cell.revealed = true;
+      cell.element.classList.add('revealed');
+      cell.element.innerText = cell.neighborMines || '';
+      if (cell.neighborMines === 0) {
+        for (var dx = -1; dx <= 1; dx++) {
+          for (var dy = -1; dy <= 1; dy++) {
+            var ni = row + dx;
+            var nj = col + dy;
+            if (ni >= 0 && ni < rows && nj >= 0 && nj < cols) {
+              revealCell(ni, nj);
+            }
+          }
+        }
+      }
+    }
+
+    function handleCellClick(event) {
+      var row = parseInt(event.target.getAttribute('data-row'));
+      var col = parseInt(event.target.getAttribute('data-col'));
+      var cell = board[row][col];
+      if (!cell.revealed) {
+        if (cell.mine) {
+          alert('Game Over');
+          revealMines();
+        } else {
+          revealCell(row, col);
+        }
+      }
+    }
+
+    function revealMines() {
+      for (var i = 0; i < rows; i++) {
+        for (var j = 0; j < cols; j++) {
+          if (board[i][j].mine) {
+            board[i][j].element.innerText = '💣';
+            board[i][j].element.style.backgroundColor = 'red';
+          }
+        }
+      }
+    }
+
+    createBoard();
+    plantMines();
+    countNeighborMines();
+  </script>
+</body>
+</html>
