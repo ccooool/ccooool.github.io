@@ -1,67 +1,59 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Screen Capture and JSON Display</title>
+    <title>Screen Recording App</title>
 </head>
 <body>
-    <h1>Screen Capture and JSON Display</h1>
+    <h1>Screen Recording App</h1>
     <div>
         <button id="startBtn">Start Recording</button>
-        <button id="stopBtn">Stop Recording</button>
+        <button id="stopBtn" disabled>Stop Recording</button>
     </div>
-    <pre id="jsonOutput"></pre>
+    <video id="videoPlayer" controls autoplay></video>
 
     <script>
-        let screenshots = [];
-        let recordingInterval;
-
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
-        const jsonOutput = document.getElementById('jsonOutput');
-
+        const videoPlayer = document.getElementById('videoPlayer');
+    
+        let recorder;
+    
         startBtn.addEventListener('click', () => {
             startRecording();
         });
-
+    
         stopBtn.addEventListener('click', () => {
             stopRecording();
         });
-
-        function captureScreenshot() {
-            const canvas = document.createElement('canvas');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(document.body, 0, 0, canvas.width, canvas.height);
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
-            
-            const rgbData = [];
-            for (let i = 0; i < imageData.length; i += 4) {
-                const rgb = [imageData[i], imageData[i + 1], imageData[i + 2]];
-                rgbData.push(rgb);
-            }
-
-            screenshots.push(rgbData);
-            updateJSONOutput();
-        }
-
-        function updateJSONOutput() {
-            jsonOutput.textContent = JSON.stringify(screenshots, null, 2);
-        }
-
+    
         function startRecording() {
-            screenshots = [];
-            updateJSONOutput();
-            recordingInterval = setInterval(captureScreenshot, 5000);
-            startBtn.disabled = true;
-            stopBtn.disabled = false;
+            navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
+                .then(stream => {
+                    recorder = new RecordRTC(stream, {
+                        type: 'video',
+                        mimeType: 'video/webm',
+                    });
+                    recorder.startRecording();
+                    videoPlayer.srcObject = stream;
+    
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error accessing screen:', error);
+                });
         }
-
+    
         function stopRecording() {
-            clearInterval(recordingInterval);
-            startBtn.disabled = false;
-            stopBtn.disabled = true;
+            recorder.stopRecording(() => {
+                const blob = recorder.getBlob();
+                videoPlayer.src = URL.createObjectURL(blob);
+    
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+            });
         }
     </script>
+    
 </body>
 </html>
